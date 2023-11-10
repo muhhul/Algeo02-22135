@@ -7,30 +7,25 @@ def RGBtoHSV (imagename):
     #Membaca dan melakukan pre processing
     img = cv2.imread(imagename)
     height, width = img.shape[:2]
-    r_channel,g_channel,b_channel = cv2.split(img)
-
-    #Normalisasi
-    r_channel = r_channel / 255
-    g_channel = g_channel / 255
-    b_channel = b_channel / 255
-
-    #Penampung nilai HSV
-    hsv = []
-    height, width = len(r_channel)
+    hsv = np.zeros((height, width, 3), dtype=np.float32)
 
     for y in (height):
         for x in (width):
+            
+            r, g, b = img[y, x] / 255.0 #Normalisasi
 
             #Mencari variabel cmax,cmin,dan delta
-            cmax = max(r_channel[x][y],g_channel[x][y],b_channel[x][y])
-            cmin = max(r_channel[x][y],g_channel[x][y],b_channel[x][y])
-            delta = cmax - cmin  
+            cmax = max(r, g, b)
+            cmin = min(r, g, b)
+            delta = cmax - cmin
 
             # Mengisi lit H, list S, list V dengan perhitungan
-            hsv.append(hue(r_channel[x][y],g_channel[x][y],b_channel[x][y],cmax,delta))
-            hsv.append(saturation(r_channel[x][y],g_channel[x][y],b_channel[x][y],cmax,delta))
-            hsv.append(cmax)
+            h = hue(r, g, b, cmax, delta)
+            s = saturation(cmax, delta)
+            v = cmax
 
+            hsv[y, x] = np.array([h, s, v])
+            
     return hsv
 
 def decompose_block(imagename):
