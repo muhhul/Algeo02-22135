@@ -1,86 +1,55 @@
 import cv2
 import numpy as np
 import math
+import os
+import time
 
-def RGBtoHSV(imagename):
-    #Membaca dan melakukan pre processing
-    img = cv2.imread(imagename)
-    height, width = img.shape[:2]
-    hsv = np.zeros((height, width, 3), dtype=np.float32)
+def RGBtoHSV(image, bins=8):
+    # Normalization
+    image = image / 255.0
 
+    r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
 
-    for y in range(height):
-        for x in range(width):
-            #Nilai dari RGB harus dinormalisasi dengan mengubah nilai range [0, 255] menjadi [0, 1]
-            r, g, b = img[y, x] / 255.0
+    hist = np.zeros((bins, bins, bins), dtype=int)
 
-            cmax = max(r, g, b)
-            cmin = min(r, g, b)
-            delta = cmax - cmin
+    cmax = np.maximum.reduce([r, g, b])
+    cmin = np.minimum.reduce([r, g, b])
+    delta = cmax - cmin
 
-            h = hue(r, g, b, cmax, delta)
-            s = saturation(cmax, delta)
-            v = cmax
+    # Handle zero division
+    delta[delta == 0] = 1.0
 
-            hsv[y, x] = np.array([h, s, v])
-            
-    return hsv
+    h = np.zeros_like(cmax)
+    h[cmax == r] = 60 * ((g[cmax == r] - b[cmax == r]) / delta[cmax == r] % 6)
+    h[cmax == g] = 60 * ((b[cmax == g] - r[cmax == g]) / delta[cmax == g] + 2)
+    h[cmax == b] = 60 * ((r[cmax == b] - g[cmax == b]) / delta[cmax == b] + 4)
 
-def hue(r, g, b, cmax, delta):
-    if delta == 0:
-        h = 0
-    elif cmax == r:
-        h = 60 * (((g - b) / delta) % 6)
-    elif cmax == g:
-        h = 60 * (((b - r) / delta) + 2)
-    elif cmax == b:
-        h = 60 * (((r - g) / delta) + 4)
-    return h
+    s = np.where(cmax == 0, 0, delta / np.where(cmax == 0, 1, cmax))
+    v = cmax
 
-def saturation(cmax, delta):
-    if cmax == 0:
-        s = 0
-    elif cmax != 0:
-        s = delta / cmax
-    return s
+    # Normalize to bin size
+    h = np.minimum((h / (360 / bins)).astype(int), bins - 1)
+    s = np.minimum((s * bins).astype(int), bins - 1)
+    v = np.minimum((v * bins).astype(int), bins - 1)
 
-def compute_histogram(image):
-    bins = [8, 8, 8]
-    hist, _ = np.histogram(image, bins=bins, range=[0, 256])
-    hist = hist / np.sum(hist)  # Normalisasi histogram
-    return hist
+    # Calculate histogram
+    hist[h, s, v] = np.sum(hist[h, s, v] + 1, axis=(0, 1))
+
+    # Normalize histogram
+    total = np.sum(hist)
+    hist = hist / total
+
+    return hist.flatten()
 
 
-def split_image_to_blocks(image, n):
-    height, width, _ = image.shape
-    block_size_x = width // n
-    block_size_y = height // n
-    blocks = []
-    
-    for i in range(0, height - block_size_y + 1, block_size_y):
-        for j in range(0, width - block_size_x + 1, block_size_x):
-            block = image[i:i + block_size_y, j:j + block_size_x]
-            blocks.append(block)
-    
-    return blocks
+def calculate_similarity(histogram1, histogram2):
+    dot = np.dot(histogram1,histogram2)
+    norm1 = np.sqrt(np.dot(histogram1, histogram1))
+    norm2 = np.sqrt(np.dot(histogram2, histogram2))
 
-def calculate_similarity(block1, block2):
-    hist1 = compute_histogram(block1)
-    hist2 = compute_histogram(block2)
-    similarity = np.dot(hist1, hist2) / (np.linalg.norm(hist1) * np.linalg.norm(hist2))
+    if (norm1 * norm2 != 0):
+        similarity = dot / (norm1 * norm2)
+    else:
+        similarity = 0
+
     return similarity
-
-def CBIR_similarity(image1, image2):
-    hsv_image1 = RGBtoHSV(image1)
-    hsv_image2 = RGBtoHSV(image2)
-    
-    blocks_image1 = split_image_to_blocks(hsv_image1, 3)
-    blocks_image2 = split_image_to_blocks(hsv_image2, 3)
-    
-    similarities = []
-    for i in range(len(blocks_image1)):
-        sim = calculate_similarity(blocks_image1[i], blocks_image2[i])
-        similarities.append(sim)
-    
-    average_similarity = sum(similarities) / len(similarities)
-    return average_similarity
