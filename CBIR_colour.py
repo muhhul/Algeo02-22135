@@ -4,11 +4,11 @@ import math
 import os
 import time
 
-def RGBtoHSV(image, bins=8):
+def RGBtoHSVHistogram(image, bins=8):
     # Normalization
     image = image / 255.0
 
-    r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
+    r, g, b = cv2.split(image)
 
     hist = np.zeros((bins, bins, bins), dtype=int)
 
@@ -42,10 +42,10 @@ def RGBtoHSV(image, bins=8):
     return hist.flatten()
 
 
-def calculate_similarity(histogram1, histogram2):
+def cosine_similarity(histogram1, histogram2):
     dot = np.dot(histogram1,histogram2)
-    norm1 = np.sqrt(np.dot(histogram1, histogram1))
-    norm2 = np.sqrt(np.dot(histogram2, histogram2))
+    norm1 = np.linalg.norm(histogram1)
+    norm2 = np.linalg.norm(histogram2)
 
     if (norm1 * norm2 != 0):
         similarity = dot / (norm1 * norm2)
@@ -53,3 +53,40 @@ def calculate_similarity(histogram1, histogram2):
         similarity = 0
 
     return similarity
+
+def compareimage(input_image, data_directory, bins=8):
+    histogram_input = RGBtoHSVHistogram(input_image, bins)
+
+    sim = []
+    list_of_files = os.listdir(data_directory)
+
+    for filename in list_of_files:
+        dataset_image = cv2.imread(os.path.join(data_directory, filename))
+        dataset_hist = RGBtoHSVHistogram(dataset_image, bins)
+
+        similarity = cosine_similarity(histogram_input, dataset_hist)
+        sim.append(similarity * 100)
+
+    sorted_indices = np.argsort(sim)[::-1]
+    sorted_similarities = np.sort(sim)[::-1]
+
+    return sorted_indices, sorted_similarities
+
+def run():
+    data_directory = "C:\\Users\\chris\\Documents\\Semester 3 Informatika\\Tubes Algeo 2\\Image"  
+    input_image = cv2.imread("0.jpg")
+    start_time = time.time()
+    sorted_indices, sorted_similarities = compareimage(input_image, data_directory,bins=8)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Elapsed time: {elapsed_time:.2f} seconds")
+ 
+    top_5_indices = sorted_indices[:5]
+
+    for i in range(len(top_5_indices)):
+        dataset_image = cv2.imread(os.path.join(data_directory, os.listdir(data_directory)[top_5_indices[i]]))
+        print(f"Image {top_5_indices[i]} - Similarity: {sorted_similarities[i]}")
+        cv2.imshow(f"Image {top_5_indices[i]} - Similarity: {sorted_similarities[i]}", dataset_image)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()

@@ -6,31 +6,21 @@ import os
 import time
 
 #baca gambar file input
-img = cv2.imread("0.jpg")
-img = cv2.resize(img,(0,0),fx = 0.5, fy = 0.5)
-hist1 = CBIR_colour.RGBtoHSV(img,bins=8)
+dataset_dir = "C:\\Users\\chris\\Documents\\Semester 3 Informatika\\Tubes Algeo 2\\Image"  
+input_image = cv2.imread("73.jpg")
+start_time = time.time()
+sorted_indices, sorted_similarities =  CBIR_colour.compareimage(input_image, dataset_dir, bins = 8)
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Elapsed time: {elapsed_time:.2f} seconds")
+ 
 
-path = "C:\\Users\\chris\\Documents\\Semester 3 Informatika\\Tubes Algeo 2\\Image"
-daftar_file = os.listdir(path)
+top_5_indices = sorted_indices[:5]
 
-sim = []
-for nama_file in daftar_file:
-    start_time = time.time()
-
-    img2 = cv2.imread(os.path.join(path,nama_file))
-    img2 = cv2.resize(img2,(0,0), fx = 0.5, fy = 0.5)
-    hist2 = CBIR_colour.RGBtoHSV(img2,bins=8)
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print("Waktu eksekusi: ",elapsed_time)
-    sim.append(((CBIR_colour.calculate_similarity(hist1,hist2)))* 100)
-
-
-simsort = sorted(sim,reverse=True)
-for i in range(len(sim)):
-    if(simsort[i] < 40):
-        break
-    for j in range(len(sim)):
-        if (simsort[i] == sim[j]):
-            print(f"Tingkat kecocokan ke-{i+1} adalah gambar ke {j+1} yang bernama {daftar_file[j]} dengan persentase {simsort[i]} %")
+for i in range(len(top_5_indices)):
+    dataset_image = cv2.imread(os.path.join(dataset_dir, os.listdir(dataset_dir)[top_5_indices[i]]))
+    print(f"Image {top_5_indices[i]} - Similarity: {sorted_similarities[i]:.2f}")
+    cv2.imshow(f"Image {top_5_indices[i]} - Similarity: {sorted_similarities[i]:.2f}", dataset_image)
+    
+cv2.waitKey(0)
+cv2.destroyAllWindows()
