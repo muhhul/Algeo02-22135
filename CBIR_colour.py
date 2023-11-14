@@ -4,65 +4,62 @@ import math
 import os
 import time
 
-def RGBtoHSVHistogram(image, bins=8):
-    # Normalization
-    image = image / 255.0
+def calculate_histogram(image):
+    # Melakukan normlisasi image dengan membaginya dengan 255
+    image = image.astype(np.float32) / 255.0
+    hsv_image = np.zeros_like(image, dtype=np.float32)
+    # Mencari cmax,cmin,dan delta
+    Cmax = np.max(image, axis=2)
+    Cmin = np.min(image, axis=2)
+    delta = Cmax - Cmin
 
-    r, g, b = cv2.split(image)
+    # Menghitung H atau Hue
+    hsv_image[..., 0] = np.where(delta == 0, 0,np.where(Cmax == image[..., 2], 60 * ((image[..., 1] - image[..., 0]) / (delta + 1e-5) % 6),np.where(Cmax == image[..., 1], 60 * ((image[..., 0] - image[..., 2]) / (delta + 1e-5) + 2),60 * ((image[..., 2] - image[..., 1]) / (delta + 1e-5) + 4))))
 
-    hist = np.zeros((bins, bins, bins), dtype=int)
+    # Menghitung S atau Saturation
+    hsv_image[..., 1] = np.where(Cmax == 0, 0, delta / (Cmax + 1e-5))
 
-    cmax = np.maximum.reduce([r, g, b])
-    cmin = np.minimum.reduce([r, g, b])
-    delta = cmax - cmin
+    # Menghitung V atau Value
+    hsv_image[..., 2] = Cmax
 
-    # Handle zero division
-    delta[delta == 0] = 1.0
+    # Scaling H unutk menyamai format OpenCV
+    hsv_image[..., 0] *= 0.5
 
-    h = np.zeros_like(cmax)
-    h[cmax == r] = 60 * ((g[cmax == r] - b[cmax == r]) / delta[cmax == r] % 6)
-    h[cmax == g] = 60 * ((b[cmax == g] - r[cmax == g]) / delta[cmax == g] + 2)
-    h[cmax == b] = 60 * ((r[cmax == b] - g[cmax == b]) / delta[cmax == b] + 4)
+    # Mengkonversi ke bentuk uint8
+    hsv_image = (hsv_image * 255).astype(np.uint8)
 
-    s = np.where(cmax == 0, 0, delta / np.where(cmax == 0, 1, cmax))
-    v = cmax
+    # Membuat Histogram dengan memanfaatkan OpenCV
+    hist = cv2.calcHist([hsv_image], [0, 1, 2], None, [8, 8, 8], [0, 256, 0, 256, 0, 256])
 
-    # Normalize to bin size
-    h = np.minimum((h / (360 / bins)).astype(int), bins - 1)
-    s = np.minimum((s * bins).astype(int), bins - 1)
-    v = np.minimum((v * bins).astype(int), bins - 1)
+    #Melakukan normalisasi histogram
+    hist = cv2.normalize(hist, hist).flatten()
 
-    # Calculate histogram
-    hist[h, s, v] = np.sum(hist[h, s, v] + 1, axis=(0, 1))
-
-    # Normalize histogram
-    total = np.sum(hist)
-    hist = hist / total
-
-    return hist.flatten()
-
+    return hist
 
 def cosine_similarity(histogram1, histogram2):
-    dot = np.dot(histogram1,histogram2)
+    # Sesuai rumus cosine similarity, Untuk menghitung dot product dari vektor histogram image 1 dan vektor histogram image 2 
+    dot = np.dot(histogram1, histogram2)
+
+    # Melakukan perkalian panjang vektor histogram 1 dan panjang vektor histogram 2
     norm1 = np.linalg.norm(histogram1)
     norm2 = np.linalg.norm(histogram2)
 
     if (norm1 * norm2 != 0):
         similarity = dot / (norm1 * norm2)
-    else:
+    else:   
         similarity = 0
 
     return similarity
 
-def compareimage(input_image, data_directory, bins=8):
-    histogram_input = RGBtoHSVHistogram(input_image, bins)
+def compareimage(input_image, data_directory):
+    histogram_input = calculate_histogram(input_image)
 
     sim = []
     list_of_files = os.listdir(data_directory)
 
     for filename in list_of_files:
         dataset_image = cv2.imread(os.path.join(data_directory, filename))
-        dataset_hist = RGBtoHSVHistogram(dataset_image, bins)
+        dataset_hist = calculate_histogram(dataset_image)
 
         similarity = cosine_similarity(histogram_input, dataset_hist)
         sim.append(similarity * 100)
@@ -74,7 +71,8 @@ def compareimage(input_image, data_directory, bins=8):
 
 def run():
     data_directory = "C:\\Users\\chris\\Documents\\Semester 3 Informatika\\Tubes Algeo 2\\Image"  
-    input_image = cv2.imread("0.jpg")
+    input_image = cv2.imread("63.jpg")
+    
     start_time = time.time()
     sorted_indices, sorted_similarities = compareimage(input_image, data_directory,bins=8)
     end_time = time.time()
