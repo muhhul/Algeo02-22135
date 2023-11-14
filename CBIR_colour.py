@@ -22,7 +22,7 @@ def calculate_histogram(image):
     # Menghitung V atau Value
     hsv_image[..., 2] = Cmax
 
-    # Scaling H unutk menyamai format OpenCV
+    # Scaling H untuk menyamai format OpenCV
     hsv_image[..., 0] *= 0.5
 
     # Mengkonversi ke bentuk uint8
@@ -44,6 +44,7 @@ def cosine_similarity(histogram1, histogram2):
     norm1 = np.linalg.norm(histogram1)
     norm2 = np.linalg.norm(histogram2)
 
+    # Menghandle jika pembaginya adalah 0
     if (norm1 * norm2 != 0):
         similarity = dot / (norm1 * norm2)
     else:   
@@ -52,11 +53,16 @@ def cosine_similarity(histogram1, histogram2):
     return similarity
 
 def compareimage(input_image, data_directory):
+    # Mencari histogram dari gambar yang diinput
     histogram_input = calculate_histogram(input_image)
 
+    # Menyimpan hasil similarity dalam array
     sim = []
+
+    # Menampung file dalam folder dataset
     list_of_files = os.listdir(data_directory)
 
+    # Melakukan pengechekan terhadap semua file dalam list_of_files
     for filename in list_of_files:
         dataset_image = cv2.imread(os.path.join(data_directory, filename))
         dataset_hist = calculate_histogram(dataset_image)
@@ -64,22 +70,24 @@ def compareimage(input_image, data_directory):
         similarity = cosine_similarity(histogram_input, dataset_hist)
         sim.append(similarity * 100)
 
-    sorted_indices = np.argsort(sim)[::-1]
+    #Melakukan sort terhadap nama file dan nilai similarity
+    soted_index = np.argsort(sim)[::-1]
     sorted_similarities = np.sort(sim)[::-1]
 
-    return sorted_indices, sorted_similarities
+    return soted_index, sorted_similarities
 
+# Melakukan running program yakni driver_colour
 def run():
     data_directory = "C:\\Users\\chris\\Documents\\Semester 3 Informatika\\Tubes Algeo 2\\Image"  
-    input_image = cv2.imread("63.jpg")
+    input_image = cv2.imread("451.jpg")
     
     start_time = time.time()
-    sorted_indices, sorted_similarities = compareimage(input_image, data_directory,bins=8)
+    soted_index, sorted_similarities = compareimage(input_image, data_directory,bins=8)
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
  
-    top_5_indices = sorted_indices[:5]
+    top_5_indices = soted_index[:5]
 
     for i in range(len(top_5_indices)):
         dataset_image = cv2.imread(os.path.join(data_directory, os.listdir(data_directory)[top_5_indices[i]]))

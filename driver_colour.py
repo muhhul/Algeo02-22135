@@ -8,8 +8,8 @@ import time
 #Mempersiapkan directory dataset
 data_directory = "C:\\Users\\chris\\Documents\\Semester 3 Informatika\\Tubes Algeo 2\\Image" 
 
-#Read input image
-input_image = cv2.imread("63.jpg")
+# Membaca input image
+input_image = cv2.imread("451.jpg")
 
 #Memulai proses compare image
 start_time = time.time()
