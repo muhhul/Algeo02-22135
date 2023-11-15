@@ -58,6 +58,7 @@ def compareimage(input_image, data_directory):
 
     # Menyimpan hasil similarity dalam array
     sim = []
+    filenames = []
 
     # Menampung file dalam folder dataset
     list_of_files = os.listdir(data_directory)
@@ -69,12 +70,14 @@ def compareimage(input_image, data_directory):
 
         similarity = cosine_similarity(histogram_input, dataset_hist)
         sim.append(similarity * 100)
+        filenames.append(filename)
 
     #Melakukan sort terhadap nama file dan nilai similarity
-    soted_index = np.argsort(sim)[::-1]
+    sorted_indices = np.argsort(sim)[::-1]
     sorted_similarities = np.sort(sim)[::-1]
+    sorted_filenames = [filenames[i] for i in sorted_indices]
 
-    return soted_index, sorted_similarities
+    return sorted_indices, sorted_similarities, sorted_filenames
 
 # Melakukan running program yakni driver_colour
 def run():
@@ -82,17 +85,17 @@ def run():
     input_image = cv2.imread("451.jpg")
     
     start_time = time.time()
-    soted_index, sorted_similarities = compareimage(input_image, data_directory,bins=8)
+    sorted_indices, sorted_similarities,sorted_filenames = compareimage(input_image, data_directory)
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
  
-    top_5_indices = soted_index[:5]
+    top_5_indices = sorted_indices[:5]
 
     for i in range(len(top_5_indices)):
         dataset_image = cv2.imread(os.path.join(data_directory, os.listdir(data_directory)[top_5_indices[i]]))
-        print(f"Image {top_5_indices[i]} - Similarity: {sorted_similarities[i]}")
-        cv2.imshow(f"Image {top_5_indices[i]} - Similarity: {sorted_similarities[i]}", dataset_image)
+        print(f"Image {sorted_filenames[i]} - Similarity: {sorted_similarities[i]}")
+        cv2.imshow(f"Image {sorted_filenames[i]} - Similarity: {sorted_similarities[i]}", dataset_image)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
