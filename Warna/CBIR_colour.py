@@ -8,6 +8,7 @@ def calculate_histogram(image):
     # Melakukan normlisasi image dengan membaginya dengan 255
     image = image.astype(np.float32) / 255.0
     hsv_image = np.zeros_like(image, dtype=np.float32)
+
     # Mencari cmax,cmin,dan delta
     Cmax = np.max(image, axis=2)
     Cmin = np.min(image, axis=2)
@@ -58,6 +59,8 @@ def compareimage(input_image, data_directory):
 
     # Menyimpan hasil similarity dalam array
     sim = []
+
+    # Menyimpan nama file dalam array
     filenames = []
 
     # Menampung file dalam folder dataset
@@ -78,6 +81,7 @@ def compareimage(input_image, data_directory):
     sorted_filenames = [filenames[i] for i in sorted_indices]
 
     return sorted_indices, sorted_similarities, sorted_filenames
+
 
 # Melakukan running program yakni driver_colour
 def run():
