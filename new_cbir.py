@@ -36,6 +36,26 @@ def calculate_histogram(image):
 
     return hist
 
+
+def calculate_block_histograms(image, block_size):
+    # Calculate the dimensions of the image
+    height, width, _ = image.shape
+
+    block_histograms = []
+    
+    # Iterate through the image in block_size steps
+    for y in range(0, height, block_size):
+        for x in range(0, width, block_size):
+            # Define the block region
+            block = image[y:y+block_size, x:x+block_size]
+            
+            # Calculate histogram for this block
+            block_hist = calculate_histogram(block)
+            block_histograms.append(block_hist)
+    
+    return block_histograms
+
+
 def cosine_similarity(histogram1, histogram2):
     # Sesuai rumus cosine similarity, Untuk menghitung dot product dari vektor histogram image 1 dan vektor histogram image 2 
     dot = np.dot(histogram1, histogram2)
@@ -52,32 +72,56 @@ def cosine_similarity(histogram1, histogram2):
 
     return similarity
 
-def compareimage(input_image, data_directory):
-    # Mencari histogram dari gambar yang diinput
+def compareimage_with_blocks(input_image, data_directory, block_size):
+    # Calculate histogram for the entire input image
     histogram_input = calculate_histogram(input_image)
+    
+    # Calculate block-wise histograms for the input image
+    block_histograms_input = calculate_block_histograms(input_image, block_size)
 
-    # Menyimpan hasil similarity dalam array
     sim = []
     filenames = []
 
-    # Menampung file dalam folder dataset
+    # Obtain the list of files in the data directory
     list_of_files = os.listdir(data_directory)
 
-    # Melakukan pengechekan terhadap semua file dalam list_of_files
+    # Iterate through all files in the directory
     for filename in list_of_files:
         dataset_image = cv2.imread(os.path.join(data_directory, filename))
-        dataset_hist = calculate_histogram(dataset_image)
 
+        # Calculate histogram for the dataset image
+        dataset_hist = calculate_histogram(dataset_image)
+        
+        # Calculate block-wise histograms for the dataset image
+        block_histograms_dataset = calculate_block_histograms(dataset_image, block_size)
+
+        # Compute similarity based on overall histogram
         similarity = cosine_similarity(histogram_input, dataset_hist)
-        sim.append(similarity * 100)
+
+        # Calculate similarity based on block-wise histograms
+        block_similarities = []
+        for block_hist_input in block_histograms_input:
+            block_sim = []
+            for block_hist_dataset in block_histograms_dataset:
+                block_sim.append(cosine_similarity(block_hist_input, block_hist_dataset))
+            block_similarities.append(max(block_sim))
+
+        # Take the average of block similarities
+        block_similarity_avg = sum(block_similarities) / len(block_similarities)
+        
+        # Combine overall and block-wise similarity (you can adjust weights or use other strategies)
+        combined_similarity = 0.6 * similarity + 0.4 * block_similarity_avg
+        
+        sim.append(combined_similarity * 100)
         filenames.append(filename)
 
-    #Melakukan sort terhadap nama file dan nilai similarity
+    # Sorting based on similarity scores
     sorted_indices = np.argsort(sim)[::-1]
     sorted_similarities = np.sort(sim)[::-1]
     sorted_filenames = [filenames[i] for i in sorted_indices]
 
     return sorted_indices, sorted_similarities, sorted_filenames
+
 
 # Melakukan running program yakni driver_colour
 def run():
@@ -85,7 +129,7 @@ def run():
     input_image = cv2.imread("451.jpg")
     
     start_time = time.time()
-    sorted_indices, sorted_similarities,sorted_filenames = compareimage(input_image, data_directory)
+    sorted_indices, sorted_similarities,sorted_filenames = compareimage_with_blocks(input_image, data_directory,4)
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
