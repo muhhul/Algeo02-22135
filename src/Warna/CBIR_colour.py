@@ -55,6 +55,9 @@ def cosine_similarity(histogram1, histogram2):
 
     return similarity
 
+def convert_to_array(string):
+    return np.array([float(val) for val in string.split(',')])
+
 def compareimage(input_image, data_directory):
     # Mencari histogram dari gambar yang diinput
     histogram_input = calculate_histogram(input_image)
@@ -97,9 +100,9 @@ def compare_histo_csv(input_image,csv_directory):
 
     df = pd.read_csv(csv_directory)
 
-    df['histogram'] = df['histrogram'].apply(eval)
+    df['histogram'] = df['histogram'].apply(convert_to_array)
 
-    for row in df.iterrows():
+    for index, row in df.iterrows():
         histogram,filepath = row['histogram'],row['filepath']
         similarity = cosine_similarity(histogram_input, histogram)
 
