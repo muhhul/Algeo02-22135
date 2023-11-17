@@ -1,13 +1,49 @@
 import React, { useState } from 'react';
-import ToggleSwitch from './components/ToggleSwitch';
+
 const InputImages = () => {
     const [image, setImage] = useState('');
     
+    const [isChecked, setIsChecked] = React.useState(false);
+    const handleToggle = () => {
+        setIsChecked(!isChecked);
+    }
     const handleImageChange = (e : any) => {
-        setImage(URL.createObjectURL(e.target.files[0]));
+        setImage(e.target.files[0]);
     };
-    const isTexture = false;
-    
+
+    const handleUpload = async (e : any) => {
+
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("file", image);
+
+        // try {
+        //   const response = await axios.post("http://127.0.0.1:8000/uploadfile/", formData, {
+        //     headers: {
+        //       "Content-Type": "multipart/form-data",
+        //     },
+        //   });
+        try {
+            if(isChecked){
+                const endPoint = "http://127.0.0.1:8000/uploadfile/";
+                const res = await fetch(endPoint, {
+                  method: "POST",
+                  body: formData,
+                });
+            }else{
+                const endPoint = "http://127.0.0.1:8000/uploadfile2/";
+                const res = await fetch(endPoint, {
+                  method: "POST",
+                  body: formData,
+                });
+            }
+            
+        }
+        catch (err) {
+        }
+      
+    };
+
     return (
         <>
             <form action="">
@@ -16,7 +52,7 @@ const InputImages = () => {
                     {
                         image ? (
                             <div className="overflow-hidden bg-black rounded-lg shadow-md w-full h-80">
-                                <img className="object-contain w-full h-full" src={image} alt="Your Image"></img>
+                                <img className="object-contain w-full h-full" src={URL.createObjectURL(image)} alt="Your Image"></img>
                             </div>
                         ) : (
                             <div className="overflow-hidden bg-[#d9d9d9] rounded-lg shadow-md w-full h-80"></div>
@@ -34,10 +70,14 @@ const InputImages = () => {
                         <div className="h-16"></div>
                         <div className="flex">
                             <span className="mr-3.5 font-poppins text-blue-500 font"> Color </span>
-                            <ToggleSwitch isChecked={isTexture}/>
+                            <div className="relative inline-block w-14 mr-2 align-middle select-none transition duration-200 ease-in">
+                                <label htmlFor="toggle" className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer">
+                                    <input type="checkbox" name="toggle" id="toggle" className="checked:bg-blue-500 bg-white toggle-checkbox absolute block w-6 h-6 rounded-full  border-4 appearance-none cursor-pointer" checked={isChecked} onChange={handleToggle}/>
+                                </label>
+                            </div>
                             <span className="ml-1 font-poppins text-blue-500"> Texture </span>
                         </div>
-                        <button type='submit' className="transition-all duration-500 bg-size-200 bg-pos-0 hover:bg-pos-100 font-poppins font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 py-2 rounded-full text-white mt-2 w-48">Search</button>
+                        <button type='submit' className="transition-all duration-500 bg-size-200 bg-pos-0 hover:bg-pos-100 font-poppins font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 py-2 rounded-full text-white mt-2 w-48" onClick={handleUpload}>Search</button>
                     </div>
                 </div>
             </form>

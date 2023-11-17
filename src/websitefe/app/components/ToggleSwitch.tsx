@@ -1,8 +1,9 @@
 import React from 'react'
 const ToggleSwitch = (props : any) => {
-    const [isChecked, setIsChecked] = React.useState(props.isChecked);
+    const [isChecked, setIsChecked] = React.useState(false);
     const handleToggle = () => {
         setIsChecked(!isChecked);
+
     }
 
     return (
