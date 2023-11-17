@@ -3,6 +3,7 @@ import numpy as np
 import math
 import os
 import time
+import pandas as pd
 
 def calculate_histogram(image):
     # Melakukan normlisasi image dengan membaginya dengan 255
@@ -99,3 +100,30 @@ def run():
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+def compare_histo_csv(input_image,csv_directory):
+    histogram_input = calculate_histogram(input_image)
+
+    # Menyimpan hasil similarity dalam array
+    sim = []
+
+    # Menyimpan nama file dalam array
+    filenames = []
+
+    df = pd.read_csv(csv_directory)
+
+    df['histogram'] = df['histogram'].apply(eval)
+
+    for index,row in df.iterrows():
+        histogram,filepath = row['histogram'],row['filepath']
+        similarity = cosine_similarity(histogram_input, histogram)
+
+        if (similarity > 0.6 ):
+            sim.append(similarity * 100)
+            filenames.append(filepath)
+
+    sorted_indices = np.argsort(sim)[::-1]
+    sorted_similarities = np.sort(sim)[::-1]
+    sorted_filenames = [filenames[i] for i in sorted_indices]
+
+    return sorted_indices, sorted_similarities, sorted_filenames

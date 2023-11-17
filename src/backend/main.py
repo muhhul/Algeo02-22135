@@ -1,7 +1,8 @@
 from dataclasses import Field
 from typing import Optional
 from bson import ObjectId
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
+from matplotlib import image
 from pydantic import BaseModel, BeforeValidator, ConfigDict, parse_obj_as
 from enum import Enum
 from typing import Annotated
@@ -11,9 +12,21 @@ import os
 import cv2
 import numpy as np
 import CBIR_colour
-
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse
+from typing import List
+from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Ganti dengan daftar asal yang diizinkan
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Tipe(str,Enum):
     def __str__(self):
@@ -64,8 +77,8 @@ dataBaseTekstur = db.get_collection("dataTekstur")
 
 
 sim = []
-data_directory = "D:\\Hul\\ITB\\Akademik\\S3\\Algeo\\Tubes\\Tubes2\\Algeo02-22135\\backend\\dataset"
-list_of_files = os.listdir(data_directory)
+# data_directory = "D:\\Hul\\ITB\\Akademik\\S3\\Algeo\\Tubes\\Tubes2\\Algeo02-22135\\backend\\dataset"
+# list_of_files = os.listdir(data_directory)
 
 dataset = []
 
@@ -118,10 +131,11 @@ transaction_data = {
     "method": "credit"
 }
 # trransaction = inputTransaction(**transaction_data)
-trransaction = inputTransaction(tipe="INVEST", amount=120, method="credit")
-listt.append(trransaction)
-for obj in listt:
-    transaction.insert_one(obj.dict())
+# trransaction = inputTransaction(tipe="INVEST", amount=120, method="credit")
+# listt.append(trransaction)
+# for obj in listt:
+#     transaction.insert_one(obj.dict())
+
 @app.post('/transaction')
 def insert_transaction():
     listt = []
@@ -185,16 +199,107 @@ def get_tekstur(tipe:Optional[Tipe] = None):
     return arrHasil
     
 @app.post('/tekstur')
-def insert_tekstur(data_directory):
+def insert_tekstur(data_directory,namaColl):
+    # absolute_path = os.path.abspath(data_directory)
+    # with open(absolute_path, "r") as file:
+    #     list_of_files = file.read()
     list_of_files = os.listdir(data_directory)
+    print(data_directory)
     i=0
+    dataBaseBaru=db.get_collection(namaColl)
+    dataBaseBaru.delete_many({})
+    print(len(list_of_files))
     for filename in list_of_files:
         i=i+1
-        if(i==5):
+        if(i==10):
             break
         print(filename)
         dataset_image = cv2.imread(os.path.join(data_directory, filename))
         dataset_image = cv2.resize(dataset_image,(0,0),fx=0.5,fy=0.5)
         dataset_tekstur = driver.tekstur(dataset_image)
         data = dataTekstur(contrast=dataset_tekstur[0],homogency=dataset_tekstur[1],entropy=dataset_tekstur[2],filepath=filename)
-        dataBaseColour.insert_one(data.dict())
+        dataBaseBaru.insert_one(data.dict())
+    return ("sukses uploading gambar")
+
+@app.get('/colour')
+def get_colour(data_directory):
+    list_of_files = os.listdir(data_directory)
+    filename = list_of_files[0]
+    input_image = cv2.imread(os.path.join(data_directory, filename))
+    sorted_indices, sorted_similarities,sorted_filenames = CBIR_colour.compareimage(input_image, data_directory)
+    arrHasil=[]
+    for i in range(len(sorted_similarities)):
+        sim=[]
+        sim.append(sorted_similarities[i])
+        sim.append(sorted_filenames[i])
+        arrHasil.append(sim)
+    return arrHasil
+
+@app.post('/colour')
+def insert_colour(data_directory):
+    # absolute_path = os.path.abspath(data_directory)
+    # with open(absolute_path, "r") as file:
+    #     list_of_files = file.read()
+    list_of_files = os.listdir(data_directory)
+    array=[]
+    pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
+    for filename in list_of_files:
+        dataset_image = cv2.imread(os.path.join(data_directory, filename))
+        histogram = CBIR_colour.calculate_histogram(dataset_image)
+        data_to_insert = {
+            "histogram":histogram,
+            "filepath":filename
+        }
+        dresult = dataBaseColour.insert_one(data_to_insert)
+
+    return ("sukses uploading gambar")
+
+@app.post("/uploadfile/")
+async def create_upload_file(file: UploadFile = File(...)):
+    image_content = await file.read()
+    nparr = np.frombuffer(image_content, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    vektor1 = driver.tekstur(img)
+
+    result_filter = dataBaseTekstur.find({})
+    result_filter = list(result_filter)
+
+    arrHasil = []
+    file=[]
+    sim = []
+    for i in range(len(result_filter)):
+        vektor2 = [result_filter[i].get('contrast'),result_filter[i].get('homogency'),result_filter[i].get('entropy')]
+        hasil = driver.compare(vektor1,vektor2)*100
+        sim.append(hasil)
+        file.append(result_filter[i].get('filepath'))
+    sorted_indices = np.argsort(sim)[::-1]
+    sorted_similarities = np.sort(sim)[::-1]
+    sorted_filenames = [file[i] for i in sorted_indices]
+    for i in range(len(result_filter)):
+        sim=[]
+        sim.append(sorted_similarities[i])
+        sim.append(sorted_filenames[i])
+        arrHasil.append(sim)
+    
+    print(arrHasil)
+    
+@app.post("/uploadfile2/")
+async def create_upload_file(file: UploadFile = File(...)):
+    image_content = await file.read()
+    arrHasil = []
+    nparr = np.frombuffer(image_content, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    imgg = CBIR_colour.calculate_histogram(img)
+    print(imgg)
+    pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
+    sorted_indices, sorted_similarities,sorted_filenames = CBIR_colour.compare_histo_csv(img, pathCSV)
+    for i in range(len(sorted_indices)):
+        sim=[]
+        sim.append(sorted_similarities[i])
+        sim.append(sorted_filenames[i])
+        arrHasil.append(sim)
+    
+    print(arrHasil)
+
+@app.post("/upload")
+async def upload_folder(folder: UploadFile = File(...)):
