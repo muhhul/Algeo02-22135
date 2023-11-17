@@ -11,6 +11,29 @@ const ImageGallery = ({ images } : any) => {
   const handleImageChange = (e : any) => {
       setImage(URL.createObjectURL(e.target.files[0]));
   };
+  const [folder, setFolder] = useState('');
+
+  const handleFileChange = async(e) => {
+    console.log("masuk satu");
+    const folder = e.target.files[0];
+    setFolder(folder);
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('folder', folder);
+    console.log("masuk 2");
+    try {
+      const response = await fetch('http://your-fastapi-server/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error('Error uploading folder:', error);
+    }
+  };
+
 
 
   // Get current images
@@ -47,8 +70,8 @@ const ImageGallery = ({ images } : any) => {
       <form action="">
         <div className="flex justify-center mb-10">
             <label className="transition-all duration-500 bg-size-200 bg-pos-0 hover:bg-pos-100 font-extrabold font-poppins bg-gradient-to-r from-blue-600 to-purple-600 py-2 rounded-lg w-48 text-white mt-2 cursor-pointer text-center">
-                <input id="image-input" className="hidden" type="file" onChange={handleImageChange} directory="" webkitdirectory="" mozdirectory=""/>
-                Upload Dataset
+                <input id="image-input" className="hidden" type="file" onChange={handleFileChange} directory="" webkitdirectory="" mozdirectory=""/>
+                Upload Folder
             </label>
         </div>
       </form>
