@@ -3,6 +3,8 @@ import numpy as np
 import math
 import os
 import time
+import csv
+import pandas as pd
 
 def calculate_histogram(image):
     # Melakukan normlisasi image dengan membaginya dengan 255
@@ -72,10 +74,39 @@ def compareimage(input_image, data_directory):
         dataset_hist = calculate_histogram(dataset_image)
 
         similarity = cosine_similarity(histogram_input, dataset_hist)
-        sim.append(similarity * 100)
-        filenames.append(filename)
+
+        if (similarity > 0.6 ):
+            sim.append(similarity * 100)
+            filenames.append(filename)
 
     #Melakukan sort terhadap nama file dan nilai similarity
+    sorted_indices = np.argsort(sim)[::-1]
+    sorted_similarities = np.sort(sim)[::-1]
+    sorted_filenames = [filenames[i] for i in sorted_indices]
+
+    return sorted_indices, sorted_similarities, sorted_filenames
+
+def compare_histo_csv(input_image,csv_directory):
+    histogram_input = calculate_histogram(input_image)
+
+    # Menyimpan hasil similarity dalam array
+    sim = []
+
+    # Menyimpan nama file dalam array
+    filenames = []
+
+    df = pd.read_csv(csv_directory)
+
+    df['histogram'] = df['histrogram'].apply(eval)
+
+    for row in df.iterrows():
+        histogram,filepath = row['histogram'],row['filepath']
+        similarity = cosine_similarity(histogram_input, histogram)
+
+        if (similarity > 0.6 ):
+            sim.append(similarity * 100)
+            filenames.append(filepath)
+
     sorted_indices = np.argsort(sim)[::-1]
     sorted_similarities = np.sort(sim)[::-1]
     sorted_filenames = [filenames[i] for i in sorted_indices]
