@@ -94,7 +94,7 @@ def insert_tekstur(data_directory,namaColl):
         dataset_image = cv2.imread(os.path.join(data_directory, filename))
         dataset_image = cv2.resize(dataset_image,(0,0),fx=0.5,fy=0.5)
         dataset_tekstur = driver.tekstur(dataset_image)
-        data = dataTekstur(contrast=dataset_tekstur[0],homogency=dataset_tekstur[1],entropy=dataset_tekstur[2],filepath=os.path.join(data_directory, filename.replace('/', '\\')))
+        data = dataTekstur(contrast=dataset_tekstur[0],homogency=dataset_tekstur[1],entropy=dataset_tekstur[2],filepath=filename)
         dataBaseBaru.insert_one(data.dict())
 
 @app.get('/colour')
@@ -122,7 +122,7 @@ def insert_colour(data_director):
         histogram = CBIR_colour.calculate_histogram(dataset_image)
         array.append({
             "histogram":histogram,
-            "filepath":os.path.join(data_director, filename.replace('/', '\\'))
+            "filepath":filename
         })
     with open(pathCSV, 'w', newline='') as csv_file:
         fieldnames = ['histogram', 'filepath']

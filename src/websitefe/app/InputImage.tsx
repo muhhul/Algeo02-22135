@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
-const InputImages = () => {
+const InputImages = ({setImages}) => {
     const [image, setImage] = useState('');
-    const [folder, setFolder] = useState('');
     const [isChecked, setIsChecked] = React.useState(false);
     const handleToggle = () => {
         setIsChecked(!isChecked);
@@ -31,7 +30,7 @@ const InputImages = () => {
                   body: formData,
                 })
                 const data = await res.json();
-                setFolder(data);
+                setImages(prevImages => [...prevImages, data])
             }else{
                 const endPoint = "http://127.0.0.1:8000/uploadfile2/";
                 const res = await fetch(endPoint, {
@@ -39,7 +38,7 @@ const InputImages = () => {
                   body: formData,
                 })
                 const data = await res.json();
-                setFolder(data);
+                setImages(prevImages => [...prevImages, data])
             }
             
         }
