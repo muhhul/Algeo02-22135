@@ -187,6 +187,7 @@ async def upload_files(file: UploadFile = File(...)):
 async def upload_files_toDB():
     insert_tekstur(folder_path,"tesss")
     insert_colour(folder_path)
+    print("sukses")
 
 @app.post("/hapusdataset")
 async def upload_files_toDB():

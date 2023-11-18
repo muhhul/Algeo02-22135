@@ -8,7 +8,6 @@ const ImageGallery = ({ images } : any) => {
 
 
 
-  const [folder, setFolder] = useState('');
 
   const handleFileChange = async(e) => {
     console.log("masuk satu");
@@ -77,9 +76,9 @@ const ImageGallery = ({ images } : any) => {
         </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
-        {currentImages.map((image : any, index : any) => (
+        {images.map((image : any, index : any) => (
         <figure key={index} className="w-full relative rounded-md drop-shadow-lg flex justify-center">
-          <img  src={'http://127.0.0.1:8000/images/${image.nama_file}'} alt={image.nama_file} className="object-cover h-48 w-full" />
+          <img src={'http://127.0.0.1:8000/upload_images/${image.nama_file}'} alt={image.nama_file} className="object-cover h-48 w-full" />
           <figcaption className="absolute bottom-0 z-90 w-3/4  px-5 py-2 text-white text-center">
             <span className="text-l font-bold">{image.persentase}%</span>
           </figcaption>
