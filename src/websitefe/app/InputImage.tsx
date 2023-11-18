@@ -29,13 +29,17 @@ const InputImages = () => {
                 const res = await fetch(endPoint, {
                   method: "POST",
                   body: formData,
-                });
+                })
+                const data = await res.json();
+                setImage(data);
             }else{
                 const endPoint = "http://127.0.0.1:8000/uploadfile2/";
                 const res = await fetch(endPoint, {
                   method: "POST",
                   body: formData,
-                });
+                })
+                const data = await res.json();
+                setImage(data);
             }
             
         }
