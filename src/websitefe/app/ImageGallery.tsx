@@ -16,21 +16,23 @@ const ImageGallery = ({ images } : any) => {
   const handleFileChange = async(e) => {
     console.log("masuk satu");
     const folder = e.target.files[0];
-    setFolder(folder);
     e.preventDefault();
-    const formData = new FormData();
-    formData.append('folder', folder);
-    console.log("masuk 2");
-    try {
-      const response = await fetch('http://127.0.0.1:8000/upload/', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-      console.log(data);
-    } catch (error) {
-      console.error('Error uploading folder:', error);
+    for (let i = 0; i < e.target.files.length; i++) {
+      const file = e.target.files[i];
+      const formData = new FormData();
+      formData.append('file', file);
+      console.log("masuk 2");
+      try {
+        const response = await fetch('http://127.0.0.1:8000/upload/', {
+          method: 'POST',
+          body: formData,
+        });
+  
+        const data = await response.json();
+        console.log(data);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
     }
   };
 

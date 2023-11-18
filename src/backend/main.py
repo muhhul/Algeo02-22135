@@ -304,19 +304,16 @@ async def create_upload_file(file: UploadFile = File(...)):
 
 UPLOAD_FOLDER = "upload_images"
 @app.post("/upload")
-async def upload_folder(folder: UploadFile = File(...)):
-    pathold = os.path.join("uploaded_folders")
-    shutil.rmtree(pathold)
-    folder_path = os.path.join("uploaded_folders", folder.filename.replace('/', '_'))
-    if not os.path.exists(folder_path):
-        try:
-            os.makedirs(folder_path)
-        except OSError as e:
-            return {"error": str(e)}
-    files = folder.file.read().split(b'\\0')
-    for i, file_data in enumerate(files):
-        file_path = os.path.join(folder_path, f"{i}.jpg")
+async def upload_files(files: List[UploadFile] = File(...)):
+    folder_path = os.path.join(UPLOAD_FOLDER)
+    if os.path.exists(folder_path):
+        shutil.rmtree(folder_path)
+    os.makedirs(folder_path, exist_ok=True)
+
+    for file in files:
+        file_path = os.path.join(folder_path, file.filename)
         with open(file_path, "wb") as f:
-            f.write(file_data)
+            f.write(await file.read())
+
     insert_tekstur(folder_path,"tesss")
         
