@@ -1,15 +1,22 @@
 "use client"
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { time } from 'console';
 
-const ImageGallery = ({ images } : any) => {
+const ImageGallery = ({ resultData,resultTime } : any) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [imagesPerPage] = useState(6);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-
-
-
-  const handleFileChange = async(e) => {
+  const handleImageClick = async (image:any) => {
+    try {
+      const module = await import(`../../backend/upload_images/${image.nama_file}`);
+      setSelectedImage(module.default);
+    } catch (error) {
+      console.error('Error loading image:', error);
+    }
+  };
+  const handleFileChange = async(e:any) => {
     console.log("masuk satu");
     const folder = e.target.files[0];
     e.preventDefault();
@@ -55,15 +62,14 @@ const ImageGallery = ({ images } : any) => {
     } catch (error) {
       console.error('Error uploading file:', error);
     }
-
   };
 
-
+  
 
   // Get current images
   const indexOfLastImage = currentPage * imagesPerPage;
   const indexOfFirstImage = indexOfLastImage - imagesPerPage;
-  const currentImages = images.slice(indexOfFirstImage, indexOfLastImage);
+  const currentData = resultData.slice(indexOfFirstImage, indexOfLastImage);
 
   // Change page
   const paginate = (pageNumber : any) => setCurrentPage(pageNumber);
@@ -72,22 +78,22 @@ const ImageGallery = ({ images } : any) => {
     <div>
         <div className='flex justify-between my-5'>
             <p className="text-blue-500 font-extrabold font-poppins">Result</p>
-            <p className="font-poppins">54 Results in 0.57 seconds</p>
+            <p className="font-poppins">{resultData.length} results in {resultTime.toFixed(2)} seconds</p>
         </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
-        {images.map((image : any, index : any) => (
+        {currentData.map((data : any, index : any) => (
         <figure key={index} className="w-full relative rounded-md drop-shadow-lg flex justify-center">
-          <img src={`http://127.0.0.1:8000/upload_images/${image.nama_file}`} alt={image.nama_file} className="object-cover h-48 w-full" />
-          <figcaption className="absolute bottom-0 z-90 w-3/4  px-5 py-2 text-white text-center">
-            <span className="text-l font-bold">{image.persentase}%</span>
+          <img src={`data:image/jpeg;base64,${data.images}`} alt={"image"} className="object-cover h-48 w-full" />
+          <figcaption className="absolute bottom-0 z-90 w-3/4  px-5 py-2 text-white text-center text-sh ">
+            <span className="text-l font-extrabold" style={{ textShadow: '0 0 5px black' }}>{data.persentase.toFixed(2)}%</span>
           </figcaption>
         </figure>
         ))}
       </div>
       <Pagination
         imagesPerPage={imagesPerPage}
-        totalImages={images.length}
+        totalImages={resultData.length}
         paginate={paginate}
       />
       <hr className="w-full h-1 bg-[#d9d9d9]"></hr>

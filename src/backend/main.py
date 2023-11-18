@@ -1,3 +1,4 @@
+import base64
 from dataclasses import Field
 from typing import Optional
 from bson import ObjectId
@@ -19,8 +20,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List
 import shutil
+import time
 
 app = FastAPI()
+arrrFIle = []
 
 app.add_middleware(
     CORSMiddleware,
@@ -47,7 +50,10 @@ dataBaseBaru=db.get_collection("tesss")
 
 sim = []
 dataset = []
+global_waktu = 0
 
+UPLOAD_FOLDER = "upload_images"
+folder_path = os.path.join(UPLOAD_FOLDER)
 
 def delete_files_in_folder(folder_pat):
     for filename in os.listdir(folder_pat):
@@ -152,44 +158,70 @@ async def create_upload_file(file: UploadFile = File(...)):
     sorted_indices = np.argsort(sim)[::-1]
     sorted_similarities = np.sort(sim)[::-1]
     sorted_filenames = [file[i] for i in sorted_indices]
-    results = [
-        {"nama_file": sorted_filenames[i], "persentase": sorted_similarities[i]}  # Gantilah dengan hasil yang sesuai
-        for i in range(len(result_filter))
-    ]
-    return JSONResponse(content=results)
+    hasil = []
+    for i in range(len(sorted_indices)):
+        image = cv2.imread(os.path.join(folder_path, sorted_filenames[i]))
+        _,buffer = cv2.imencode('.JPG',image)
+        image_encode = base64.b64encode(buffer.tobytes()).decode("utf-8")
+        hasil.append({
+            "persentase":sorted_similarities[i],
+            "images":image_encode
+        })
+    return hasil
     
 @app.post("/uploadfile2/")
 async def create_upload_file(file: UploadFile = File(...)):
+    start_time = time.time()
     image_content = await file.read()
     arrHasil = []
     nparr = np.frombuffer(image_content, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
     sorted_indices, sorted_similarities,sorted_filenames = CBIR_colour.compareimagehsv(img, pathCSV)
-    results = [
-        {"nama_file": sorted_filenames[i], "persentase": sorted_similarities[i]}  # Gantilah dengan hasil yang sesuai
-        for i in range(len(sorted_indices))
-    ]
-    return JSONResponse(content=results)
+    hasil = []
+    for i in range(50):
+        image = cv2.imread(os.path.join(folder_path, sorted_filenames[i]))
+        _,buffer = cv2.imencode('.JPG',image)
+        image_encode = base64.b64encode(buffer.tobytes()).decode("utf-8")
+        hasil.append({
+            "persentase":sorted_similarities[i],
+            "images":image_encode
+        })
+    print("sukses")
+    end_time = time.time()
+    global global_waktu 
+    global_waktu = end_time - start_time
+    return hasil
 
-UPLOAD_FOLDER = "upload_images"
-folder_path = os.path.join(UPLOAD_FOLDER)
 @app.post("/upload")
 async def upload_files(file: UploadFile = File(...)):
     print("tess")
     os.makedirs(folder_path, exist_ok=True)
     file_path = os.path.join(folder_path, file.filename.replace('/', '_'))
+    arrrFIle.append(file.filename)
     with open(file_path, "wb") as f:
         f.write(await file.read())
 
 
 @app.post("/uploadtodatabase")
 async def upload_files_toDB():
-    insert_tekstur(folder_path,"tesss")
+    # insert_tekstur(folder_path,"tesss")
     insert_colour(folder_path)
     print("sukses")
 
 @app.post("/hapusdataset")
 async def upload_files_toDB():
+    arrrFIle=[]
     delete_files_in_folder(folder_path)
+
+@app.get("/hasil/{namafile}")
+def get_image(namafile:str):
+    list_of_files = os.listdir(folder_path)
+    for img in list_of_files:
+        if img == namafile:
+            return (cv2.imread(os.path.join(folder_path, img)))
+        
+@app.post("/time")
+async def timee():
+    return global_waktu
         

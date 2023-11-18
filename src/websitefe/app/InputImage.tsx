@@ -1,55 +1,21 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-const InputImages = ({setImages}) => {
+const InputImage = ({onSearch}:any) => {
     const [image, setImage] = useState('');
-    const [isChecked, setIsChecked] = React.useState(false);
+    const [isChecked, setIsChecked] = useState(false);
     const handleToggle = () => {
         setIsChecked(!isChecked);
     }
     const handleImageChange = (e : any) => {
         setImage(e.target.files[0]);
     };
-
-    const handleUpload = async (e : any) => {
-
+    const searchHandler = (e:any) =>{
         e.preventDefault();
-        const formData = new FormData();
-        formData.append("file", image);
-
-        // try {
-        //   const response = await axios.post("http://127.0.0.1:8000/uploadfile/", formData, {
-        //     headers: {
-        //       "Content-Type": "multipart/form-data",
-        //     },
-        //   });
-        try {
-            if(isChecked){
-                const endPoint = "http://127.0.0.1:8000/uploadfile/";
-                const res = await fetch(endPoint, {
-                  method: "POST",
-                  body: formData,
-                })
-                const data = await res.json();
-                setImages(prevImages => [...prevImages, data])
-            }else{
-                const endPoint = "http://127.0.0.1:8000/uploadfile2/";
-                const res = await fetch(endPoint, {
-                  method: "POST",
-                  body: formData,
-                })
-                const data = await res.json();
-                setImages(prevImages => [...prevImages, data])
-            }
-            
-        }
-        catch (err) {
-        }
-      
-    };
-
+        onSearch({isChecked,image})
+    }
     return (
         <>
-            <form action="">
+            <form action="" onSubmit={searchHandler}>
                 <div className="flex w-ful justify-between p-10 w-full">
                     <div className="flex justify-center items-center p-10 w-full">
                     {
@@ -80,7 +46,7 @@ const InputImages = ({setImages}) => {
                             </div>
                             <span className="ml-1 font-poppins text-blue-500"> Texture </span>
                         </div>
-                        <button type='submit' className="transition-all duration-500 bg-size-200 bg-pos-0 hover:bg-pos-100 font-poppins font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 py-2 rounded-full text-white mt-2 w-48" onClick={handleUpload}>Search</button>
+                        <button type='submit' className="transition-all duration-500 bg-size-200 bg-pos-0 hover:bg-pos-100 font-poppins font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 py-2 rounded-full text-white mt-2 w-48" >Search</button>
                     </div>
                 </div>
             </form>
@@ -88,4 +54,4 @@ const InputImages = ({setImages}) => {
     )
 }
 
-export default InputImages
+export default InputImage
