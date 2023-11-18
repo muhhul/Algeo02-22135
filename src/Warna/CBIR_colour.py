@@ -55,9 +55,6 @@ def cosine_similarity(histogram1, histogram2):
 
     return similarity
 
-def convert_to_array(string):
-    return np.array([float(val) for val in string.split(',')])
-
 def compareimage(input_image, data_directory):
     # Mencari histogram dari gambar yang diinput
     histogram_input = calculate_histogram(input_image)
@@ -77,7 +74,7 @@ def compareimage(input_image, data_directory):
         dataset_hist = calculate_histogram(dataset_image)
 
         similarity = cosine_similarity(histogram_input, dataset_hist)
-
+        
         if (similarity > 0.6 ):
             sim.append(similarity * 100)
             filenames.append(filename)
@@ -89,33 +86,25 @@ def compareimage(input_image, data_directory):
 
     return sorted_indices, sorted_similarities, sorted_filenames
 
-def compare_histo_csv(input_image,csv_directory):
+def compareimagehsv(input_image, csv_file):
+    # Calculate the histogram of the input image
     histogram_input = calculate_histogram(input_image)
 
-    # Menyimpan hasil similarity dalam array
-    sim = []
+    # Read the CSV file
+    df = pd.read_csv(csv_file)
 
-    # Menyimpan nama file dalam array
-    filenames = []
+    # Convert the histograms from strings to lists of numbers
+    df['histogram'] = df['histogram'].apply(lambda x: [float(i) for i in x.strip('[]').replace('\r\n', ' ').split(' ') if i])
 
-    df = pd.read_csv(csv_directory)
+    # Calculate the similarities
+    sim = [cosine_similarity(histogram_input, hist) * 100 for hist in df['histogram']]
 
-    df['histogram'] = df['histogram'].apply(convert_to_array)
-
-    for index, row in df.iterrows():
-        histogram,filepath = row['histogram'],row['filepath']
-        similarity = cosine_similarity(histogram_input, histogram)
-
-        if (similarity > 0.6 ):
-            sim.append(similarity * 100)
-            filenames.append(filepath)
-
+    # Sort the similarities and filenames
     sorted_indices = np.argsort(sim)[::-1]
     sorted_similarities = np.sort(sim)[::-1]
-    sorted_filenames = [filenames[i] for i in sorted_indices]
+    sorted_filenames = [df['filepath'].iloc[i] for i in sorted_indices]
 
     return sorted_indices, sorted_similarities, sorted_filenames
-
 
 # Melakukan running program yakni driver_colour
 def run():
@@ -129,11 +118,29 @@ def run():
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
  
     top_5_indices = sorted_indices[:5]
-
+    
     for i in range(len(top_5_indices)):
-        dataset_image = cv2.imread(os.path.join(data_directory, os.listdir(data_directory)[top_5_indices[i]]))
         print(f"Image {sorted_filenames[i]} - Similarity: {sorted_similarities[i]}")
-        cv2.imshow(f"Image {sorted_filenames[i]} - Similarity: {sorted_similarities[i]}", dataset_image)
+        image = cv2.imread(os.path.join(data_directory, sorted_filenames[i]))
+        cv2.imshow(f"Image {sorted_filenames[i]}", image)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def runhsv():
+    data_directory = "C:\\Users\\chris\\Documents\\Semester 3 Informatika\\Tubes Algeo 2\\dataCSV\\datahisto.csv"  
+    input_image = cv2.imread("416.jpg")
+    
+    start_time = time.time()
+    sorted_indices, sorted_similarities,sorted_filenames = compareimagehsv(input_image, data_directory)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Elapsed time: {elapsed_time:.2f} seconds")
+ 
+    top_5_indices = sorted_indices[:5]
+    
+    for i in range(len(top_5_indices)):
+        print(f"Image {sorted_filenames[i]} - Similarity: {sorted_similarities[i]}")
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
