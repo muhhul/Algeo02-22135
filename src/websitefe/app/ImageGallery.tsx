@@ -22,7 +22,7 @@ const ImageGallery = ({ images } : any) => {
     formData.append('folder', folder);
     console.log("masuk 2");
     try {
-      const response = await fetch('http://your-fastapi-server/upload', {
+      const response = await fetch('http://127.0.0.1:8000/upload/', {
         method: 'POST',
         body: formData,
       });

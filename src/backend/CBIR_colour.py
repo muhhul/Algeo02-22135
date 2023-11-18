@@ -3,12 +3,14 @@ import numpy as np
 import math
 import os
 import time
+import csv
 import pandas as pd
 
 def calculate_histogram(image):
     # Melakukan normlisasi image dengan membaginya dengan 255
     image = image.astype(np.float32) / 255.0
     hsv_image = np.zeros_like(image, dtype=np.float32)
+
     # Mencari cmax,cmin,dan delta
     Cmax = np.max(image, axis=2)
     Cmin = np.min(image, axis=2)
@@ -53,12 +55,17 @@ def cosine_similarity(histogram1, histogram2):
 
     return similarity
 
+def convert_to_array(string):
+    return np.array([float(val) for val in string.split(',')])
+
 def compareimage(input_image, data_directory):
     # Mencari histogram dari gambar yang diinput
     histogram_input = calculate_histogram(input_image)
 
     # Menyimpan hasil similarity dalam array
     sim = []
+
+    # Menyimpan nama file dalam array
     filenames = []
 
     # Menampung file dalam folder dataset
@@ -70,8 +77,10 @@ def compareimage(input_image, data_directory):
         dataset_hist = calculate_histogram(dataset_image)
 
         similarity = cosine_similarity(histogram_input, dataset_hist)
-        sim.append(similarity * 100)
-        filenames.append(filename)
+
+        if (similarity > 0.6 ):
+            sim.append(similarity * 100)
+            filenames.append(filename)
 
     #Melakukan sort terhadap nama file dan nilai similarity
     sorted_indices = np.argsort(sim)[::-1]
@@ -79,6 +88,34 @@ def compareimage(input_image, data_directory):
     sorted_filenames = [filenames[i] for i in sorted_indices]
 
     return sorted_indices, sorted_similarities, sorted_filenames
+
+def compare_histo_csv(input_image,csv_directory):
+    histogram_input = calculate_histogram(input_image)
+
+    # Menyimpan hasil similarity dalam array
+    sim = []
+
+    # Menyimpan nama file dalam array
+    filenames = []
+
+    df = pd.read_csv(csv_directory)
+
+    df['histogram'] = df['histogram'].apply(convert_to_array)
+
+    for index, row in df.iterrows():
+        histogram,filepath = row['histogram'],row['filepath']
+        similarity = cosine_similarity(histogram_input, histogram)
+
+        if (similarity > 0.6 ):
+            sim.append(similarity * 100)
+            filenames.append(filepath)
+
+    sorted_indices = np.argsort(sim)[::-1]
+    sorted_similarities = np.sort(sim)[::-1]
+    sorted_filenames = [filenames[i] for i in sorted_indices]
+
+    return sorted_indices, sorted_similarities, sorted_filenames
+
 
 # Melakukan running program yakni driver_colour
 def run():
@@ -100,30 +137,3 @@ def run():
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-def compare_histo_csv(input_image,csv_directory):
-    histogram_input = calculate_histogram(input_image)
-
-    # Menyimpan hasil similarity dalam array
-    sim = []
-
-    # Menyimpan nama file dalam array
-    filenames = []
-
-    df = pd.read_csv(csv_directory)
-
-    df['histogram'] = df['histogram'].apply(eval)
-
-    for index,row in df.iterrows():
-        histogram,filepath = row['histogram'],row['filepath']
-        similarity = cosine_similarity(histogram_input, histogram)
-
-        if (similarity > 0.6 ):
-            sim.append(similarity * 100)
-            filenames.append(filepath)
-
-    sorted_indices = np.argsort(sim)[::-1]
-    sorted_similarities = np.sort(sim)[::-1]
-    sorted_filenames = [filenames[i] for i in sorted_indices]
-
-    return sorted_indices, sorted_similarities, sorted_filenames

@@ -12,11 +12,13 @@ import os
 import cv2
 import numpy as np
 import CBIR_colour
+import csv
+from PIL import Image
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from typing import List
-from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image
+import shutil
 
 app = FastAPI()
 
@@ -159,17 +161,16 @@ def insert_transaction():
     # transaction.insert_one(dict(listt))
     # return input_transaction
 
-# @app.get('/transaction')
-# def get_transaction(tipe:Optional[Tipe] = None):
-#     if tipe is not None:
-#         result_filter = []
-#         for t in transaction:
-#             t = inputTransaction.parse_obj(t)
-#             if t.tipe == tipe:
-#                 result_filter.append(t)
-#     else:
-#         result_filter=transaction
-#     return result_filter
+# dataAwal = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataset"
+# dataColour = []
+# list_of_files = os.listdir(dataAwal)
+# for filename in list_of_files:
+#     dataset_image = cv2.imread(os.path.join(dataAwal, filename))
+#     histogram = CBIR_colour.calculate_histogram(dataset_image)
+#     simm=[]
+#     simm.append(histogram)
+#     simm.append(filename)
+#     dataColour.append(simm)
 
 @app.get('/tekstur')
 def get_tekstur(tipe:Optional[Tipe] = None):
@@ -246,12 +247,16 @@ def insert_colour(data_directory):
     for filename in list_of_files:
         dataset_image = cv2.imread(os.path.join(data_directory, filename))
         histogram = CBIR_colour.calculate_histogram(dataset_image)
-        data_to_insert = {
+        array.append({
             "histogram":histogram,
             "filepath":filename
-        }
-        dresult = dataBaseColour.insert_one(data_to_insert)
-
+        })
+    with open(pathCSV, 'w', newline='') as csv_file:
+        fieldnames = ['histogram', 'filepath']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in array:
+            writer.writerow(row)
     return ("sukses uploading gambar")
 
 @app.post("/uploadfile/")
@@ -289,17 +294,29 @@ async def create_upload_file(file: UploadFile = File(...)):
     arrHasil = []
     nparr = np.frombuffer(image_content, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    imgg = CBIR_colour.calculate_histogram(img)
-    print(imgg)
-    pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
     sorted_indices, sorted_similarities,sorted_filenames = CBIR_colour.compare_histo_csv(img, pathCSV)
     for i in range(len(sorted_indices)):
         sim=[]
         sim.append(sorted_similarities[i])
         sim.append(sorted_filenames[i])
         arrHasil.append(sim)
-    
     print(arrHasil)
 
+UPLOAD_FOLDER = "upload_images"
 @app.post("/upload")
 async def upload_folder(folder: UploadFile = File(...)):
+    pathold = os.path.join("uploaded_folders")
+    shutil.rmtree(pathold)
+    folder_path = os.path.join("uploaded_folders", folder.filename.replace('/', '_'))
+    if not os.path.exists(folder_path):
+        try:
+            os.makedirs(folder_path)
+        except OSError as e:
+            return {"error": str(e)}
+    files = folder.file.read().split(b'\\0')
+    for i, file_data in enumerate(files):
+        file_path = os.path.join(folder_path, f"{i}.jpg")
+        with open(file_path, "wb") as f:
+            f.write(file_data)
+    insert_tekstur(folder_path,"tesss")
+        
