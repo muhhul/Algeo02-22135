@@ -106,29 +106,6 @@ def compareimagehsv(input_image, csv_file):
 
     return sorted_indices, sorted_similarities, sorted_filenames
 
-def compare_histo(input_image,csv_directory):
-    histogram_input = calculate_histogram(input_image)
-
-    # Menyimpan hasil similarity dalam array
-    sim = []
-
-    # Menyimpan nama file dalam array
-    filenames = []
-
-    for i in range:
-        histogram,filepath = row['histogram'],row['filepath']
-        similarity = cosine_similarity(histogram_input, histogram)
-
-        if (similarity > 0.6 ):
-            sim.append(similarity * 100)
-            filenames.append(filepath)
-
-    sorted_indices = np.argsort(sim)[::-1]
-    sorted_similarities = np.sort(sim)[::-1]
-    sorted_filenames = [filenames[i] for i in sorted_indices]
-
-    return sorted_indices, sorted_similarities, sorted_filenames
-
 
 # Melakukan running program yakni driver_colour
 def run():
