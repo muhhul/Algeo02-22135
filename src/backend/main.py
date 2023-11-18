@@ -30,40 +30,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-class Tipe(str,Enum):
-    def __str__(self):
-        return str(self.value)
-    INCOME = "INCOME"
-    PURCHASE = "PURCHASE"
-    INVEST = "INVEST"
-
-class inputTransaction(BaseModel):
-    tipe:Tipe
-    amount:int
-    method:Optional[str]
-
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-    
-    @classmethod
-    def validate(cls,v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid Object")
-        return ObjectId(v)
-    
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
-
-# class Transaction(BaseModel):
-#     id: PyObjectId 
-#     tipe:Tipe
-#     amount:int
-#     method:Optional[str]
-#     class Config:
-#         json_encoders = {ObjectId: str}
 class dataTekstur(BaseModel):
     contrast:float
     homogency:float
@@ -76,134 +42,48 @@ db = client.get_database("dataSetImg")
 transaction = db.get_collection("transaction")
 dataBaseColour = db.get_collection("dataColour")
 dataBaseTekstur = db.get_collection("dataTekstur")
+dataBaseBaru=db.get_collection("tesss")
 
 
 sim = []
-# data_directory = "D:\\Hul\\ITB\\Akademik\\S3\\Algeo\\Tubes\\Tubes2\\Algeo02-22135\\backend\\dataset"
-# list_of_files = os.listdir(data_directory)
-
 dataset = []
 
 
-# for filename in list_of_files:
-#     print(filename)
-#     dataset_image = cv2.imread(os.path.join(data_directory, filename))
-#     dataset_colour = CBIR_colour.calculate_histogram(dataset_image)
-#     data:dataColour
+def delete_files_in_folder(folder_pat):
+    for filename in os.listdir(folder_pat):
+        file_path = os.path.join(folder_pat, filename)
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
 
-#     dataBaseColour.insert_one(my_dict.dict())
+# @app.get('/tekstur')
+# def get_tekstur(tipe:Optional[Tipe] = None):
+#     result_filter = dataBaseTekstur.find({})
+#     result_filter = list(result_filter)
 
-# for filename in list_of_files:
-#     print(filename)
-#     dataset_image = cv2.imread(os.path.join(data_directory, filename))
-#     dataset_tekstur = driver.tekstur(dataset_image)
-#     data = dataTekstur(contrast=dataset_tekstur[0],homogency=dataset_tekstur[1],entropy=dataset_tekstur[2],filepath=filename)
-#     dataset.append(data)
-#     dataBaseTekstur.insert_one(data.dict())
-# @app.get('/transaction')
-# # async def root():
-# #     return {"message":"hello world"}
-# # Query param
-# def get_transaction(tipe:str,amount:int):
-#     return f"balikan transaksi dengan tipe {tipe} dan amount {amount}"
-
-# # Path param
-# @app.get('/transaction/{tipe}')
-# def get_transaction(tipe:str):
-#     return f"balikan transaksi dengan tipe {tipe}"
-
-
-# @app.post('/transaction')
-# def insert_transaction(input_transaction:inputTransaction):
-#     transaction.append(input_transaction)
-#     return transaction
-
-
-listt = []
-transaction_data = {
-    "tipe": "INCOME",
-    "amount": 100,
-    "method": "credit"
-}
-trransaction = inputTransaction(tipe="INCOME", amount=100, method="credit")
-listt.append(trransaction)
-transaction_data = {
-    "tipe": "INVEST",
-    "amount": 3,
-    "method": "credit"
-}
-# trransaction = inputTransaction(**transaction_data)
-# trransaction = inputTransaction(tipe="INVEST", amount=120, method="credit")
-# listt.append(trransaction)
-# for obj in listt:
-#     transaction.insert_one(obj.dict())
-
-@app.post('/transaction')
-def insert_transaction():
-    listt = []
-    transaction_data = {
-        "tipe": "INCOME",
-        "amount": 100,
-        "method": "credit"
-    }
-    trransaction = inputTransaction(tipe="INCOME", amount=100, method="credit")
-    listt.append(trransaction)
-    transaction_data = {
-        "tipe": "INVEST",
-        "amount": 3,
-        "method": "credit"
-    }
-    # trransaction = inputTransaction(**transaction_data)
-    trransaction = inputTransaction(tipe="INVEST", amount=120, method="credit")
-    listt.append(trransaction)
-    for obj in listt:
-        transaction.insert_one(obj.dict())
-    # transaction.insert_one(dict(listt))
-    # return input_transaction
-
-# dataAwal = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataset"
-# dataColour = []
-# list_of_files = os.listdir(dataAwal)
-# for filename in list_of_files:
-#     dataset_image = cv2.imread(os.path.join(dataAwal, filename))
-#     histogram = CBIR_colour.calculate_histogram(dataset_image)
-#     simm=[]
-#     simm.append(histogram)
-#     simm.append(filename)
-#     dataColour.append(simm)
-
-@app.get('/tekstur')
-def get_tekstur(tipe:Optional[Tipe] = None):
-    result_filter = dataBaseTekstur.find({})
-    result_filter = list(result_filter)
-
-    vektor1 = [33594549,-910456.3650100988,65645.00094583261]
-    # for r in result_filter:
-    #     r["_id"] = str(r["_id"])
-    arrHasil = []
-    file=[]
-    sim = []
-    for i in range(len(result_filter)):
-        vektor2 = [result_filter[i].get('contrast'),result_filter[i].get('homogency'),result_filter[i].get('entropy')]
-        hasil = driver.compare(vektor1,vektor2)*100
-        sim.append(hasil)
-        file.append(result_filter[i].get('filepath'))
-    sorted_indices = np.argsort(sim)[::-1]
-    sorted_similarities = np.sort(sim)[::-1]
-    sorted_filenames = [file[i] for i in sorted_indices]
-    for i in range(len(result_filter)):
-        sim=[]
-        sim.append(sorted_similarities[i])
-        sim.append(sorted_filenames[i])
-        arrHasil.append(sim)
+#     vektor1 = [33594549,-910456.3650100988,65645.00094583261]
+#     arrHasil = []
+#     file=[]
+#     sim = []
+#     for i in range(len(result_filter)):
+#         vektor2 = [result_filter[i].get('contrast'),result_filter[i].get('homogency'),result_filter[i].get('entropy')]
+#         hasil = driver.compare(vektor1,vektor2)*100
+#         sim.append(hasil)
+#         file.append(result_filter[i].get('filepath'))
+#     sorted_indices = np.argsort(sim)[::-1]
+#     sorted_similarities = np.sort(sim)[::-1]
+#     sorted_filenames = [file[i] for i in sorted_indices]
+#     for i in range(len(result_filter)):
+#         sim=[]
+#         sim.append(sorted_similarities[i])
+#         sim.append(sorted_filenames[i])
+#         arrHasil.append(sim)
     
-    return arrHasil
+#     return arrHasil
     
 @app.post('/tekstur')
 def insert_tekstur(data_directory,namaColl):
-    # absolute_path = os.path.abspath(data_directory)
-    # with open(absolute_path, "r") as file:
-    #     list_of_files = file.read()
     list_of_files = os.listdir(data_directory)
     print(data_directory)
     i=0
@@ -211,16 +91,11 @@ def insert_tekstur(data_directory,namaColl):
     dataBaseBaru.delete_many({})
     print(len(list_of_files))
     for filename in list_of_files:
-        i=i+1
-        if(i==10):
-            break
-        print(filename)
         dataset_image = cv2.imread(os.path.join(data_directory, filename))
         dataset_image = cv2.resize(dataset_image,(0,0),fx=0.5,fy=0.5)
         dataset_tekstur = driver.tekstur(dataset_image)
         data = dataTekstur(contrast=dataset_tekstur[0],homogency=dataset_tekstur[1],entropy=dataset_tekstur[2],filepath=filename)
         dataBaseBaru.insert_one(data.dict())
-    return ("sukses uploading gambar")
 
 @app.get('/colour')
 def get_colour(data_directory):
@@ -234,18 +109,16 @@ def get_colour(data_directory):
         sim.append(sorted_similarities[i])
         sim.append(sorted_filenames[i])
         arrHasil.append(sim)
-    return arrHasil
+
 
 @app.post('/colour')
-def insert_colour(data_directory):
-    # absolute_path = os.path.abspath(data_directory)
-    # with open(absolute_path, "r") as file:
-    #     list_of_files = file.read()
-    list_of_files = os.listdir(data_directory)
+def insert_colour(data_director):
+
+    list_of_files = os.listdir(data_director)
     array=[]
     pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
     for filename in list_of_files:
-        dataset_image = cv2.imread(os.path.join(data_directory, filename))
+        dataset_image = cv2.imread(os.path.join(data_director, filename))
         histogram = CBIR_colour.calculate_histogram(dataset_image)
         array.append({
             "histogram":histogram,
@@ -257,7 +130,6 @@ def insert_colour(data_directory):
         writer.writeheader()
         for row in array:
             writer.writerow(row)
-    return ("sukses uploading gambar")
 
 @app.post("/uploadfile/")
 async def create_upload_file(file: UploadFile = File(...)):
@@ -266,7 +138,7 @@ async def create_upload_file(file: UploadFile = File(...)):
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     vektor1 = driver.tekstur(img)
 
-    result_filter = dataBaseTekstur.find({})
+    result_filter = dataBaseBaru.find({})
     result_filter = list(result_filter)
 
     arrHasil = []
@@ -280,13 +152,11 @@ async def create_upload_file(file: UploadFile = File(...)):
     sorted_indices = np.argsort(sim)[::-1]
     sorted_similarities = np.sort(sim)[::-1]
     sorted_filenames = [file[i] for i in sorted_indices]
-    for i in range(len(result_filter)):
-        sim=[]
-        sim.append(sorted_similarities[i])
-        sim.append(sorted_filenames[i])
-        arrHasil.append(sim)
-    
-    print(arrHasil)
+    results = [
+        {"nama_file": sorted_filenames[i], "persentase": sorted_similarities[i]}  # Gantilah dengan hasil yang sesuai
+        for i in range(len(result_filter))
+    ]
+    return JSONResponse(content=results)
     
 @app.post("/uploadfile2/")
 async def create_upload_file(file: UploadFile = File(...)):
@@ -294,26 +164,31 @@ async def create_upload_file(file: UploadFile = File(...)):
     arrHasil = []
     nparr = np.frombuffer(image_content, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    sorted_indices, sorted_similarities,sorted_filenames = CBIR_colour.compare_histo_csv(img, pathCSV)
-    for i in range(len(sorted_indices)):
-        sim=[]
-        sim.append(sorted_similarities[i])
-        sim.append(sorted_filenames[i])
-        arrHasil.append(sim)
-    print(arrHasil)
+    pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
+    sorted_indices, sorted_similarities,sorted_filenames = CBIR_colour.compareimagehsv(img, pathCSV)
+    results = [
+        {"nama_file": sorted_filenames[i], "persentase": sorted_similarities[i]}  # Gantilah dengan hasil yang sesuai
+        for i in range(len(sorted_indices))
+    ]
+    return JSONResponse(content=results)
 
 UPLOAD_FOLDER = "upload_images"
+folder_path = os.path.join(UPLOAD_FOLDER)
 @app.post("/upload")
-async def upload_files(files: List[UploadFile] = File(...)):
-    folder_path = os.path.join(UPLOAD_FOLDER)
-    if os.path.exists(folder_path):
-        shutil.rmtree(folder_path)
+async def upload_files(file: UploadFile = File(...)):
+    print("tess")
     os.makedirs(folder_path, exist_ok=True)
+    file_path = os.path.join(folder_path, file.filename.replace('/', '_'))
+    with open(file_path, "wb") as f:
+        f.write(await file.read())
 
-    for file in files:
-        file_path = os.path.join(folder_path, file.filename)
-        with open(file_path, "wb") as f:
-            f.write(await file.read())
 
+@app.post("/uploadtodatabase")
+async def upload_files_toDB():
     insert_tekstur(folder_path,"tesss")
+    insert_colour(folder_path)
+
+@app.post("/hapusdataset")
+async def upload_files_toDB():
+    delete_files_in_folder(folder_path)
         

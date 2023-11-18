@@ -17,6 +17,19 @@ const ImageGallery = ({ images } : any) => {
     console.log("masuk satu");
     const folder = e.target.files[0];
     e.preventDefault();
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/hapusdataset/', {
+        method: 'POST',
+        body: "tes",
+      });
+
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+
     for (let i = 0; i < e.target.files.length; i++) {
       const file = e.target.files[i];
       const formData = new FormData();
@@ -34,6 +47,19 @@ const ImageGallery = ({ images } : any) => {
         console.error('Error uploading file:', error);
       }
     }
+    
+    try {
+      const response = await fetch('http://127.0.0.1:8000/uploadtodatabase/', {
+        method: 'POST',
+        body: "tes",
+      });
+
+      const data = await response.json();
+      console.log(data);
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+
   };
 
 
