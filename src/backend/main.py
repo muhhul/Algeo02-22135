@@ -122,7 +122,8 @@ def insert_colour(data_director):
 
     list_of_files = os.listdir(data_director)
     array=[]
-    pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
+    pathCSV = os.path.abspath("data.csv")
+    pathCSV = os.path.join(pathCSV.replace('\\', '/'))
     for filename in list_of_files:
         dataset_image = cv2.imread(os.path.join(data_director, filename))
         histogram = CBIR_colour.calculate_histogram(dataset_image)
@@ -176,7 +177,9 @@ async def create_upload_file(file: UploadFile = File(...)):
     arrHasil = []
     nparr = np.frombuffer(image_content, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    pathCSV = "D:/Hul/ITB/Akademik/S3/Algeo/Tubes/Tubes2/algeo02-22135/src/backend/dataCSV/data.csv"
+    pathCSV = os.path.abspath("data.csv")
+    pathCSV = os.path.join(pathCSV.replace('\\', '/'))
+    print(pathCSV)
     sorted_indices, sorted_similarities,sorted_filenames = CBIR_colour.compareimagehsv(img, pathCSV)
     hasil = []
     for i in range(50):
